@@ -1,0 +1,26 @@
+---
+  - name: Clean tmp directory
+    become: False
+    local_action:
+      file path=tmp/calc-sum/ state=absent force=yes
+
+  - name: Clone git repository
+    become: False
+    local_action:
+      git repo=git@github.com:bkmz/goapp.git
+      dest=tmp/calc-sum
+      version=api
+
+  - name: Copy bin on remote host
+    copy:
+      src: tmp/calc-sum/main
+      dest: /opt/app/calc-sum/
+      owner: www-data
+      group: www-data
+      mode: u=rwx,g=r,o=r
+
+  - name: Create calc-sum service
+    template:
+      src: calc-sum.service.j2
+      dest: /etc/systemd/system/calc-sum.service
+    notify: calc-sum restarted

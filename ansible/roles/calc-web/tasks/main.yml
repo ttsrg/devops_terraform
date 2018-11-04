@@ -1,0 +1,40 @@
+---
+  - name: Clear TMP directory
+    become: False
+    local_action:
+      file path=tmp/calc-web/ state=absent force=yes
+
+  - name: Clone git repository
+    become: False
+    local_action:
+      git repo=git@github.com:bkmz/goapp-web.git
+      dest=tmp/calc-web
+
+  - name: Remove .git folder in cloned repository
+    become: False
+    local_action:
+      file path=tmp/calc-web/.git state=absent force=yes
+
+  - name: Copy files on remote host
+    copy:
+      src: tmp/calc-web/
+      dest: /opt/app/calc-web/
+      owner: www-data
+      group: www-data
+      mode: u=rw,g=r,o=r
+
+  - name: Create nginx configuration HTTPS
+    template:
+      src: https.conf.j2
+      dest: /etc/nginx/sites-available/{{ item }}.https.conf
+    with_items:
+      - "{{ ssl_certs_domains }}"
+
+  - name: Install HTTPS configuration
+    file:
+      src: /etc/nginx/sites-available/{{ item }}.https.conf
+      path: /etc/nginx/sites-enabled/{{ item }}.https.conf
+      state: link
+    with_items:
+      - "{{ ssl_certs_domains }}"
+    notify: restart nginx

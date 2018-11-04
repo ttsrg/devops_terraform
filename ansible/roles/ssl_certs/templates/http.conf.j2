@@ -1,0 +1,13 @@
+server {
+  listen 80;
+
+  server_name {{ item }};
+
+  location / {
+    return 301 https://{{ item }};
+  }
+
+  location /.well-known {
+    root /opt/app/acme;
+  }
+}

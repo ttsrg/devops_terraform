@@ -1,0 +1,20 @@
+server {
+  listen 443 ssl;
+
+  ssl_certificate /etc/letsencrypt/live/{{ item }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ item }}/privkey.pem;
+
+  location / {
+    root /opt/app/calc-web;
+    index index.html;
+  }
+
+  location ~ /\.ht|.git {
+    deny all;
+  }
+
+  location /api/sum {
+    rewrite ^/api/(.*)$ /$1 break;
+    proxy_pass http://{{ calc_web_api_ip }}:8080;
+  }
+}

@@ -1,0 +1,20 @@
+- hosts: web
+  gather_facts: false
+  become: yes
+  vars:
+    ansible_ssh_user: ubuntu
+    nginx_remove_default_vhost: true
+    # ssl_certs_domains: [ilia.devops.srwx.net]
+    ssl_certs_email_confirmation: ilia@ilin.dn.ua
+    ansible_ssh_host_key_checing: false
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: bash -c "test -e /usr/bin/python || (apt -qqy update && apt install -qqy python-minimal)"
+      register: output
+      changed_when: output.stdout != ""
+    - name: Gathering Facts
+      setup:
+  roles:
+    - geerlingguy.nginx
+    - ssl_certs
+    - calc-web

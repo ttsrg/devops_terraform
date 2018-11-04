@@ -1,0 +1,37 @@
+---
+  - name: Install letsencrypt
+    apt: name=letsencrypt state=present
+
+  - name: Create directory for SSL chalenge
+    file: path=/opt/app/acme/.well-known state=directory
+
+  - name: Create http configuration for domains
+    template:
+      src: http.conf.j2
+      dest: /etc/nginx/sites-available/{{ item }}.http.conf
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - "{{ ssl_certs_domains }}"
+
+  - name: Installing http configurations
+    file:
+      src: /etc/nginx/sites-available/{{ item }}.http.conf
+      path: /etc/nginx/sites-enabled/{{ item }}.http.conf
+      state: link
+    with_items:
+      - "{{ ssl_certs_domains }}"
+    register: configurations_liks
+    notify: restart nginx
+
+  - name: Force handlers (restart nginx)
+    meta: flush_handlers
+    when: configurations_liks.changed
+
+  - name: Recieve SSL certificates
+    shell: letsencrypt certonly --non-interactive --agree-tos --webroot -w /opt/app/acme/ -d "{{ ssl_certs_domains | join('\n') }}" --email {{ ssl_certs_email_confirmation }}
+    args:
+      creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+    with_items:
+      - "{{ ssl_certs_domains }}"

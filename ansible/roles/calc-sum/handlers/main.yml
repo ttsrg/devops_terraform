@@ -1,0 +1,6 @@
+---
+  - name: calc-sum restarted
+    service:
+      name: calc-sum
+      enabled: yes
+      state: restarted

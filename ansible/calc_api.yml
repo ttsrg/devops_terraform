@@ -1,0 +1,16 @@
+---
+- hosts: api
+  gather_facts: false
+  become: yes
+  vars:
+    ansible_ssh_user: ubuntu
+    ansible_ssh_host_key_checing: false
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: bash -c "test -e /usr/bin/python || (apt -qqy update && apt install -qqy python-minimal)"
+      register: output
+      changed_when: output.stdout != ""
+    - name: Gathering Facts
+      setup:
+  roles:
+    - calc-sum
